@@ -1,0 +1,26 @@
+
+/**
+ *  REVERT_CUSTOM HUFF EXERCISE
+ *
+ *
+ *  When a transaction is being executed within a smart contract, based on the logic of that contract, it can revert if a preset condition is not met.
+ *  They're 2 main ways to revert in solidity, 
+ *  - using a string error message e,g (`require(x != 0, "Only values above 0");`)
+ *  - reverting with a custom error e.g (`if(x == 0) revert OnlyValuesAbove0();`)
+ *
+ *  The task is to write within the `MAIN` macro below, huff code that reverts (all the time) with the custom error `OnlyHuff()`
+*/
+
+#define error OnlyHuff()
+
+#define macro MAIN() = takes(0) returns(0) {
+    __ERROR(OnlyHuff)           // Define the custom error `OnlyHuff`
+                                // Stack: [empty] (No stack change, just defines the error)
+    0x00 mstore                 // [0] - Push the memory offset 0 onto the stack
+                                // Stack: [0]
+                                // (mstore would normally store a value at this offset, but here it's preparing for revert data)
+
+    0x04 0x00 revert            // Revert the transaction
+                                // Stack: [empty] (revert does not return, ends execution)
+                                // The parameters 0x04 and 0x00 specify the start and size of the memory from which to return data, effectively returning no data here.
+}

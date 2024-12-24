@@ -1,0 +1,31 @@
+
+/**
+ *  REVERT_STRING HUFF EXERCISE
+ *
+ *
+ *  When a transaction is being executed within a smart contract, based on the logic of that contract, it can revert if a preset condition is not met.
+ *  They're 2 main ways to revert in solidity, 
+ *  - using a string error message e,g (`require(x != 0, "Only values above 0");`)
+ *  - reverting with a custom error e.g (`if(x == 0) revert OnlyValuesAbove0();`)
+ *
+ *  The task is to write within the `MAIN` macro below, huff code that reverts (all the time) with the string error message `Only Huff`
+*/
+
+
+#define macro MAIN() = takes(0) returns(0) {
+     0x20 returndatasize mstore  // [0x20] - Push the memory offset 0x20 onto the stack
+                                // Stack: [0x20]
+                                // mstore stores the returndatasize (initially 0) at memory offset 0x20
+
+    0x09 0x20 mstore            // [0x09, 0x20] - Push the length of the string (9 bytes) and the memory offset 0x20 onto the stack
+                                // Stack: [0x09, 0x20]
+                                // mstore stores the length of the string at memory offset 0x20
+
+    __RIGHTPAD(0x4f6e6c792048756666) 0x40 mstore // [0x4f6e6c792048756666, 0x40] - Push the UTF-8 hex string and the memory offset 0x40 onto the stack
+                                                  // Stack: [0x4f6e6c792048756666, 0x40]
+                                                  // mstore stores the UTF-8 hex string at memory offset 0x40
+
+    0x60 returndatasize revert  // [0x60, returndatasize] - Push the memory offset 0x60 and the returndatasize onto the stack
+                                // Stack: [0x60, returndatasize]
+                                // revert reverts the transaction, returning the data starting from memory offset 0x60
+}

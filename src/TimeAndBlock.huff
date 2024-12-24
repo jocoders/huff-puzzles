@@ -1,0 +1,37 @@
+/** 
+ *  TIME_AND_BLOCK HUFF EXERCISE
+ *
+ *  The task is to write within the `MAIN` macro below, a function named `getTimeAndBlock` that and returns current timestamp and block number.
+ *
+ *  NOTICE: The contract should revert when an unrecognized function is called
+ */
+
+#define function getTimeAndBlock() payable returns(uint256, uint256)
+
+#define macro GET_TIME_AND_BLOCK() = takes(0) returns(0) {
+    timestamp                     // [timestamp] - Push the current block timestamp onto the stack
+                                  // Stack: [timestamp]
+    number                        // [number, timestamp] - Push the current block number onto the stack
+                                  // Stack: [number, timestamp]
+
+    0x20 mstore                   // [] - Store the timestamp at memory offset 0x20
+                                  // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
+    0x00 mstore                   // [] - Store the block number at memory offset 0x00
+                                  // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
+
+    0x40 0x00 return              // Return 64 bytes starting from memory location 0x00
+                                  // Stack: [empty] (return consumes the top two stack items: size and start position)
+}
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload    
+    0xe0 shr            
+
+    __FUNC_SIG(getTimeAndBlock) eq  
+    getTimeAndBlock jumpi     
+
+    0x00 0x00 revert
+
+    getTimeAndBlock:
+      GET_TIME_AND_BLOCK()
+}

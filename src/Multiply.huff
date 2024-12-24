@@ -1,0 +1,57 @@
+
+/** 
+ *  MULTIPLY HUFF EXERCISE
+ *
+ *  When writing solidity, we most times have to perform some mathematical operations like multiplication etc
+ *  
+ *  The task is to write within the `MAIN` macro below, a function named `multiply` that takes in 2 uint256s, and returns their product. Be sure to revert on overflow
+ *
+ *  NOTICE: The contract should revert when an unrecognized function is called
+ */
+
+#define function multiply(uint256, uint256) payable returns(uint256)
+
+#define macro MULTIPLY() = takes(0) returns(0) {
+    0x04 calldataload         // [arg_1] - Load the first argument from calldata at offset 0x04
+                              // Stack: [arg_1]
+    dup1 iszero zero jumpi    // if arg_1 == 0, return 0
+                              // Stack: [arg_1] (dup1 duplicates arg_1, iszero checks if it's zero, jump if true)
+
+    0x24 calldataload swap1   // [arg_2, arg_1] - Load the second argument from calldata at offset 0x24 and swap positions with arg_1
+                              // Stack: [arg_2, arg_1]
+    dup2 dup2 mul             // [mul_result, arg_2, arg_1] - Duplicate arg_2 and arg_1, then multiply them
+                              // Stack: [mul_result, arg_2, arg_1]
+    dup1 0x00 mstore          // Store mul_result in memory at offset 0
+                              // Stack: [mul_result, arg_2, arg_1] (dup1 duplicates mul_result)
+
+    div eq ret jumpi          // if mul_result / arg_2 == arg_1, return mul_result
+                              // Stack: [arg_1] (div divides mul_result by arg_2, eq checks if the result equals arg_1, jump if true)
+
+    0x00 0x00 revert          // Revert the transaction if overflow is detected
+                              // Stack: [empty]
+
+    zero:
+        0x00 0x00 mstore      // Store 0 in memory at offset 0x00
+                              // Stack: [empty]
+        0x20 0x00 return      // Return 32 bytes starting from memory location 0x00
+                              // Stack: [empty]
+
+    ret:
+        0x20 0x00 return      // Return 32 bytes starting from memory location 0x00
+                              // Stack: [empty]
+}
+
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload
+    0xe0 shr
+
+    __FUNC_SIG(multiply) eq
+    multiply jumpi
+
+    0x00 0x00 revert
+
+    multiply:
+       MULTIPLY()
+        
+}

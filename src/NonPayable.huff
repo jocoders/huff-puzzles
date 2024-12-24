@@ -1,0 +1,28 @@
+
+/** 
+ *  NON PAYABLE HUFF EXERCISE
+ *
+ *  When a user sends a transaction to a smart contract, they can include ether with the transaction.
+ *  In solidity we denote that we wish to accept this ether by either marking the function as payable or adding 
+    a payable fallback/receive function to our contract
+ *  
+ *  The task is to write within the `MAIN` macro below, huff code that reverts if ether is sent with the transaction.
+ */
+
+#define macro MAIN() = takes(0) returns(0) {
+    callvalue                   // [callvalue] - Push the amount of ether (in wei) sent with the call onto the stack
+                                // Stack: [callvalue]
+    0x00                        // [0, callvalue] - Push 0 onto the stack for comparison
+                                // Stack: [0, callvalue]
+
+    eq                          // [is_zero] - Compare if callvalue equals 0 (eq checks equality of top two stack items)
+                                // Stack: [is_zero] (1 if callvalue is 0, otherwise 0)
+    zero_value jumpi            // Jump to label zero_value if is_zero is true (i.e., no ether was sent)
+
+    0x00 0x00 revert            // Revert the transaction if any ether was sent
+                                // Stack: [empty] (revert does not return, ends execution)
+
+    zero_value:                 // Label for handling the case where no ether was sent
+        stop                    // Stop the execution cleanly if no ether was sent
+                                // Stack: [empty] (stop ends execution)
+}

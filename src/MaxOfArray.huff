@@ -1,0 +1,73 @@
+
+/** 
+ *  MAX_OF_ARRAY HUFF EXERCISE
+ *  
+ *  In this task, Given an abi encoded array of uint256, return its maximum value. Revert if the array is empty.
+ *
+ *  NOTICE: The contract should revert when an unrecognized function is called
+ */
+
+#define function maxOfArray(uint256[]) payable returns(uint256)
+
+#define macro MAX_OF_ARRAY() = takes(0) returns(0) {
+    0x44                          // [0x44] - Смещение данных массива в calldata
+    calldatasize                  // [calldatasize, 0x44] - Размер всего calldata
+    sub                           // [arrayLength] - Длина массива (в байтах)
+
+    // Проверка: если массив пустой, то revert
+    dup1                          // [arrayLength, arrayLength]
+    iszero emptyArray jumpi       // Переход, если arrayLength == 0
+
+    // max = arr[0]
+    0x44 calldataload             // [arr[0], arrayLength] - Загружаем первый элемент массива
+    dup1                          // [max, max, arrayLength] - Копируем для инициализации max
+
+    // i = 1
+    push1 0x01                    // [i=1, max, arrayLength]
+
+    loopStart:
+        dup2 dup2                 // [i, arrayLength, i, max, arrayLength]
+        0x20 mul                  // [i*32, arrayLength, i, max, arrayLength]
+        lt iszero finish jumpi    // Проверка: i*32 >= arrayLength -> выход из цикла
+
+        // Загрузить arr[i]
+        dup1 0x20 mul             // [i*32, i, max, arrayLength]
+        0x44 add                  // [data_offset, i, max, arrayLength]
+        calldataload              // [arr[i], i, max, arrayLength]
+
+        // Сравнить arr[i] с max
+        dup2 gt                   // [arr[i] > max, arr[i], max, i, arrayLength]
+        iszero skipUpdate jumpi   // Пропустить обновление max, если arr[i] <= max
+
+        swap2                     // [max, arr[i], i, arrayLength]
+        pop                       // [arr[i], i, arrayLength]
+        swap1                     // [max, i, arrayLength] - Обновляем max
+
+        skipUpdate:
+        swap2 pop                 // [i, max, arrayLength]
+        0x01 add                  // [i+1, max, arrayLength] - Увеличить i
+        loopStart jump            // Повторить цикл
+
+    finish:
+        pop                       // [max] - Убираем длину массива
+        push0 mstore              // Сохраняем max в памяти
+        0x20 push0 return         // Возвращаем 32 байта, начиная с адреса 0
+
+    emptyArray:
+        0x00 0x00 revert          // Если массив пустой, вызываем revert
+}
+
+
+
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr           
+
+    __FUNC_SIG(maxOfArray) eq  
+    maxOfArray jumpi     
+
+    0x00 0x00 revert
+
+    maxOfArray:
+        MAX_OF_ARRAY()
+}

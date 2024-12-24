@@ -1,0 +1,76 @@
+
+/** 
+ *  SUM_ARRAY HUFF EXERCISE
+ *
+ *  
+ *  The task is to write within the `MAIN` macro below, write a functionality that takes 
+    an array of uint256 as an argument and returns the sum of all the numbers
+ *
+ *  NOTICE: The contract should revert when an unrecognized function is called
+ */
+
+#define function sumArray(uint256[]) payable returns(uint256)
+
+#define macro SUM_ARRAY() = takes(0) returns(0) {
+    0x44                          // [0x44] - Push the offset for the start of the array data onto the stack
+                                  // Stack: [0x44]
+    calldatasize                  // [calldatasize, 0x44] - Push the size of the entire calldata onto the stack
+                                  // Stack: [calldatasize, 0x44]
+    sub                           // [length] - Subtract 0x44 from calldatasize to get the length of the array data
+                                  // Stack: [length]
+    
+    // sum=0
+    push0                         // [0, length] - Initialize sum to 0 and push onto the stack
+                                  // Stack: [0, length]
+    
+    // i=0
+    push0                         // [0, 0, length] - Initialize index i to 0 and push onto the stack
+                                  // Stack: [0, 0, length]
+
+    loopStart:                    
+        dup3 dup2                 // [length, i, sum, i, length] - Duplicate length and i for comparison
+                                  // Stack: [length, i, sum, i, length]
+        0x20 mul                  // [i*32, sum, i, length] - Multiply index i by 32 (size of one uint256)
+                                  // Stack: [i*32, sum, i, length]
+        lt iszero finish jumpi    // Jump to finish if i*32 >= length
+                                  // Stack: [sum, i, length] (if not jumping)
+       
+        dup1 0x20 mul             // [i*32, sum, i, length] - Duplicate i and multiply by 32 again for data offset
+                                  // Stack: [i*32, sum, i, length]
+        0x44 add                  // [data_offset, sum, i, length] - Add 0x44 to get the correct data offset in calldata
+                                  // Stack: [data_offset, sum, i, length]
+        calldataload              // [data_value, sum, i, length] - Load the data at the calculated offset
+                                  // Stack: [data_value, sum, i, length]
+        dup3                      // [sum, data_value, sum, i, length] - Duplicate sum for addition
+                                  // Stack: [sum, data_value, sum, i, length]
+
+        add                       // [new_sum, i, length] - Add data_value to sum
+                                  // Stack: [new_sum, i, length]
+        swap2 pop                 // [i, new_sum, length] - Swap i and new_sum, pop old i
+                                  // Stack: [i, new_sum, length]
+        0x1 add                   // [i+1, new_sum, length] - Increment i by 1
+                                  // Stack: [i+1, new_sum, length]
+        loopStart jump            // Jump back to the start of the loop
+    
+    finish:
+        pop                       // [new_sum] - Pop the length off the stack, leaving only the sum
+                                  // Stack: [new_sum]
+        push0 mstore              // [] - Store new_sum at memory offset 0
+                                  // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
+        0x20 push0 return         // Return 32 bytes starting from memory location 0
+                                  // Stack: [empty] (return consumes the top two stack items: size and start position)
+}
+
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr           
+
+    __FUNC_SIG(sumArray) eq  
+    sumArray jumpi     
+
+    0x00 0x00 revert
+
+    sumArray:
+        SUM_ARRAY()
+
+}

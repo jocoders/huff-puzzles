@@ -1,0 +1,47 @@
+ 
+/** 
+ *  CREATE HUFF EXERCISE
+ *  
+ *  The task is to deploy this contract with a function `makeContract()` which when called creates a contract
+ *  that when called with any data returns `0xcaffe`.
+ *  The call to `makeContract` should return the address of the newly created contract.
+ *
+ *  NOTICE: The contract should revert when an unrecognized function is called
+ */
+
+ #define function makeContract() payable returns(address)
+
+ #define macro MAKE_CONTRACT() = takes(0) returns(0) {
+    0x600a8060093d393df3620caffe3d5260203df3 // This is a sequence of bytecode that defines the behavior of the contract to be created.
+                                             // It includes opcodes for pushing data, returning data, and handling function calls.
+                                             // 0x60 is the PUSH1 opcode, which pushes the next byte onto the stack.
+                                             // 0x0a, 0x80, 0x60, 0x09, etc., are the bytes being pushed by various PUSH operations.
+                                             // Stack: [contract bytecode]
+
+    returndatasize mstore                    // Store the size of the return data (initially 0) at memory location 0.
+                                             // Stack: [empty] (mstore consumes the top two stack items)
+
+    0x13 0x0d returndatasize                 // Pushes additional values onto the stack, possibly related to setup or further operations.
+                                             // Stack: [0x0d, 0x13, 0]
+
+    create                                   // Creates a new contract with the provided bytecode and endowment (0 wei in this case).
+                                             // Stack: [address] - The address of the newly created contract is left on the stack.
+
+    returndatasize mstore                    // Store the size of the return data (still 0 after contract creation) at memory location 0.
+                                             // Stack: [empty] (mstore consumes the top two stack items)
+
+    0x20 returndatasize return               // Return 32 bytes starting from memory location 0, which contains the address of the new contract.
+                                             // Stack: [empty] (return consumes the top two stack items)
+ }
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr           
+
+    __FUNC_SIG(makeContract) eq  
+    makeContract jumpi     
+
+    0x00 0x00 revert
+
+    makeContract:
+        MAKE_CONTRACT()
+ }

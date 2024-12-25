@@ -8,9 +8,109 @@
  *      - keeping track of and viewing balance
  */
 
+#define constant BALANCE_SLOT = FREE_STORAGE_POINTER()  
+
 #define function balanceOf(address) payable returns(uint256)
 #define function withdraw(uint256) payable returns()
 
-#define macro MAIN() = takes(0) returns(0) {
+#define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns (1) {
+    // Input stack: [key]
+    // Load the data into memory and hash it, while preserving the memory location.
+    <mem_ptr>   // [<mem_ptr>, key]
+    mstore      // []
 
+    // Hash the data, generating a key.
+    0x20                // [32]
+    <mem_ptr>           // [<mem_ptr>, 32]
+    sha3                // [slot]
+}
+
+/// @notice Store an element from a key
+#define macro STORE_ELEMENT(mem_ptr) = takes(2) returns(0) {
+    // Input stack: [key, value]
+    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot, value]
+    sstore                          // []
+}
+
+/// @notice Load an element onto the stack from a key
+#define macro LOAD_ELEMENT(mem_ptr) = takes(1) returns(1) {
+    // Input stack: [key]
+    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot]
+    sload                           // [value]
+}
+
+#define macro BALANCE_OF() = takes(0) returns(0) {
+    0x04 calldataload
+    LOAD_ELEMENT(BALANCE_SLOT)
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro WITHDRAW() = takes(0) returns(0) {
+    0x04 calldataload        // [value]
+    BALANCE_OF()             // [balance, value]
+    gt send jumpi
+
+    finish jump
+
+    finish:
+        0x00 0x00 revert
+
+    send:
+        0x00                     // [retSize]
+        0x00                     // [retOffset, retSize]
+        0x20                     // [argSize, retOffset, retSize]
+        0x04                     // [argOffset, argSize, retOffset, retSize]
+        0x04 calldataload        // [value, argOffset, argSize, retOffset, retSize]
+        caller                   // [to, value, argOffset, argSize, retOffset, retSize]
+        0x6000                   // [gas, to, value, argOffset, argSize, retOffset, retSize]
+        call                     // [success]
+        stop
+}
+
+#define macro RECEIVE() = takes(0) returns(0) {
+    0x00                                           // [0x00]
+    callvalue                                      // [value, 0x00]
+    gt continue jumpi                              // []
+    
+    continue:
+      callvalue                                    // [value]
+      caller                                       // [caller, value]
+      dup1                                         // [caller, caller, value]
+      LOAD_ELEMENT(BALANCE_SLOT)
+      dup1
+      iszero finish jumpi
+
+    receive_finish jump
+
+    receive_finish:
+        dup3
+        add
+        swap1
+        STORE_ELEMENT(BALANCE_SLOT)
+        pop
+        stop
+
+    finish:
+        pop
+        STORE_ELEMENT(BALANCE_SLOT)
+        stop
+}
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi
+    dup1 __FUNC_SIG(withdraw) eq withdraw jumpi
+
+    receive jump
+
+    balanceOf:
+        BALANCE_OF()
+
+    withdraw:
+        WITHDRAW()
+
+    receive:
+        RECEIVE()
 }

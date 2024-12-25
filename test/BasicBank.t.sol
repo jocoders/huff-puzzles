@@ -1,55 +1,55 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import 'forge-std/Test.sol';
-import { HuffDeployer } from 'foundry-huff/HuffDeployer.sol';
+import "forge-std/Test.sol";
+import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 
 interface BasicBank {
-  function balanceOf(address user) external view returns (uint256);
+    function balanceOf(address user) external view returns (uint256);
 
-  function withdraw(uint256 amount) external;
+    function withdraw(uint256 amount) external;
 }
 
 contract BasicBankTest is Test {
-  BasicBank public basicBank;
+    BasicBank public basicBank;
 
-  function setUp() public {
-    basicBank = BasicBank(HuffDeployer.config().deploy('BasicBank'));
-  }
+    function setUp() public {
+        basicBank = BasicBank(HuffDeployer.config().deploy("BasicBank"));
+    }
 
-  function testDeposit(uint256 value) external {
-    vm.deal(address(this), value);
-    (bool success, ) = address(basicBank).call{ value: value }('');
-    require(success, 'deposit failed');
-    assertEq(address(basicBank).balance, value, 'Wrong balance of basic bank contract');
-    assertEq(basicBank.balanceOf(address(this)), value, 'Wrong balance of depositor');
-  }
+    function testDeposit(uint256 value) external {
+        vm.deal(address(this), value);
+        (bool success,) = address(basicBank).call{value: value}("");
+        require(success, "deposit failed");
+        assertEq(address(basicBank).balance, value, "Wrong balance of basic bank contract");
+        assertEq(basicBank.balanceOf(address(this)), value, "Wrong balance of depositor");
+    }
 
-  function testRemoveEther(uint256 value) external {
-    vm.deal(address(this), value);
-    (bool success, ) = address(basicBank).call{ value: value }('');
-    require(success, 'deposit failed');
+    function testRemoveEther(uint256 value) external {
+        vm.deal(address(this), value);
+        (bool success,) = address(basicBank).call{value: value}("");
+        require(success, "deposit failed");
 
-    console.log('--------------------------------');
-    console.log('***value', value);
-    uint256 balance = basicBank.balanceOf(address(this));
-    console.log('***balance_before', balance);
-    console.log('address(this)', address(this));
+        console.log("--------------------------------");
+        console.log("***value", value);
+        uint256 balance = basicBank.balanceOf(address(this));
+        console.log("***balance_before", balance);
+        console.log("address(this)", address(this));
 
-    basicBank.withdraw(value);
-    uint256 balance_after = basicBank.balanceOf(address(this));
-    console.log('***balance_after', balance_after);
-    console.log('--------------------------------');
+        basicBank.withdraw(value);
+        uint256 balance_after = basicBank.balanceOf(address(this));
+        console.log("***balance_after", balance_after);
+        console.log("--------------------------------");
 
-    assertEq(address(this).balance, value, 'Wrong balance of depositor');
-    assertEq(basicBank.balanceOf(address(this)), 0 ether, 'Balance of basic bank contract should be 0');
-  }
+        assertEq(address(this).balance, value, "Wrong balance of depositor");
+        assertEq(basicBank.balanceOf(address(this)), 0 ether, "Balance of basic bank contract should be 0");
+    }
 
-  //   function testWithdrawRevertWithoutDeposit(uint256 value) external {
-  //     vm.assume(value > 0);
-  //     vm.expectRevert();
-  //     basicBank.withdraw(value);
-  //   }
+    function testWithdrawRevertWithoutDeposit(uint256 value) external {
+        vm.assume(value > 0);
+        vm.expectRevert();
+        basicBank.withdraw(value);
+    }
 
-  receive() external payable {}
+    receive() external payable {}
 }

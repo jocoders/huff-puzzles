@@ -5,8 +5,80 @@
  *  also have a getter function that returns how much an address has donated. Addresses can donate several times
  */
 
+#define constant BALANCE_SLOT = FREE_STORAGE_POINTER() 
+
 #define function donated(address) payable returns(uint256)
 
+#define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns (1) {
+    // Input stack: [key]
+    // Load the data into memory and hash it, while preserving the memory location.
+    <mem_ptr>   // [<mem_ptr>, key]
+    mstore      // []
+
+    // Hash the data, generating a key.
+    0x20                // [32]
+    <mem_ptr>           // [<mem_ptr>, 32]
+    sha3                // [slot]
+}
+
+/// @notice Store an element from a key
+#define macro STORE_ELEMENT(mem_ptr) = takes(2) returns(0) {
+    // Input stack: [key, value]
+    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot, value]
+    sstore                          // []
+}
+
+/// @notice Load an element onto the stack from a key
+#define macro LOAD_ELEMENT(mem_ptr) = takes(1) returns(1) {
+    // Input stack: [key]
+    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot]
+    sload                           // [value]
+}
+
+
+#define macro SET_DONATION() = returns(0) {
+    callvalue                                   // [value]
+    caller                                      // [from, value]
+    dup1                                        // [from, from, value]
+
+    LOAD_ELEMENT(BALANCE_SLOT)                  // [saved_value, from, value]
+    dup1                                        // [saved_value, saved_value, from, value]
+    iszero finish jumpi                         // [saved_value, from, value]
+
+    set_finish jump                             
+
+    set_finish:                                 // [saved_value, from, value]
+       dup3                                     // [value, saved_value, from, value]
+       add                                      // [sum, from, value]
+       swap1                                    // [from, sum, value]
+       STORE_ELEMENT(BALANCE_SLOT)              // [value]
+       pop                                      // []
+       stop
+   
+    finish:
+        pop                                     // [from, value]
+        STORE_ELEMENT(BALANCE_SLOT)             // []
+        stop
+}
+
+#define macro DONATED() = takes(0) returns(0) {
+    caller                                     // [from]
+    LOAD_ELEMENT(BALANCE_SLOT)                 // [value]
+    0x00 mstore
+    0x20 0x00 return
+}
+
 #define macro MAIN() = takes(0) returns(0) {
-    
+    0x00 calldataload 0xe0 shr                
+
+    dup1 __FUNC_SIG(donated) eq donated jumpi
+
+    set_donation jump
+
+    set_donation:
+        SET_DONATION()
+
+    donated:
+        DONATED()
+
 }

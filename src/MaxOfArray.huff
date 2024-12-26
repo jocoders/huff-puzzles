@@ -10,51 +10,56 @@
 #define function maxOfArray(uint256[]) payable returns(uint256)
 
 #define macro MAX_OF_ARRAY() = takes(0) returns(0) {
-    0x44                          // [0x44] - Смещение данных массива в calldata
-    calldatasize                  // [calldatasize, 0x44] - Размер всего calldata
-    sub                           // [arrayLength] - Длина массива (в байтах)
+    0x44                          // [0x44] 
+    calldatasize                  // [calldatasize, 0x44] 
+    sub                           // [length] 
 
-    // Проверка: если массив пустой, то revert
-    dup1                          // [arrayLength, arrayLength]
-    iszero emptyArray jumpi       // Переход, если arrayLength == 0
+    dup1                          // [length, length]
+    iszero _revert jumpi          // [length]
 
-    // max = arr[0]
-    0x44 calldataload             // [arr[0], arrayLength] - Загружаем первый элемент массива
-    dup1                          // [max, max, arrayLength] - Копируем для инициализации max
+    push0                         // [max = 0, length] 
+    push0                         // [i = 0, max, length]
 
-    // i = 1
-    push1 0x01                    // [i=1, max, arrayLength]
 
     loopStart:
-        dup2 dup2                 // [i, arrayLength, i, max, arrayLength]
-        0x20 mul                  // [i*32, arrayLength, i, max, arrayLength]
-        lt iszero finish jumpi    // Проверка: i*32 >= arrayLength -> выход из цикла
+        dup3                      // [length, i, max, length]
+        dup2                      // [i, length, i, max, length]
 
-        // Загрузить arr[i]
-        dup1 0x20 mul             // [i*32, i, max, arrayLength]
-        0x44 add                  // [data_offset, i, max, arrayLength]
-        calldataload              // [arr[i], i, max, arrayLength]
+        0x20                      // [32, i, length, i, max, length]
+        mul                       // [i*32, length, i, max, length]
+        lt                        // [1 | 0, i, max, length]
+        iszero finish jumpi       // [i, max, length]  
 
-        // Сравнить arr[i] с max
-        dup2 gt                   // [arr[i] > max, arr[i], max, i, arrayLength]
-        iszero skipUpdate jumpi   // Пропустить обновление max, если arr[i] <= max
+        dup1                      // [i, i, max, length] 
+        0x20                      // [32, i, i, max, length] 
+        mul                       // [i*32, i, max, length]
+        0x44                      // [0x44, i*32, i, max, length] 
+        add                       // [0x44*i*32, i, max, length]
+        calldataload              // [arr[i], i, max, length]
 
-        swap2                     // [max, arr[i], i, arrayLength]
-        pop                       // [arr[i], i, arrayLength]
-        swap1                     // [max, i, arrayLength] - Обновляем max
+        dup1                      // [arr[i], arr[i], i, max, length] 
+        dup4                      // [max, arr[i], arr[i], i, max, length]
+        swap1                     // [arr[i], max, arr[i], i, max, length]
+        gt                        // [1 | 0, arr[i], i, max, length]
+        iszero to_loop_start jumpi// [arr[i], i, max, length]
 
-        skipUpdate:
-        swap2 pop                 // [i, max, arrayLength]
-        0x01 add                  // [i+1, max, arrayLength] - Увеличить i
-        loopStart jump            // Повторить цикл
+        swap2                     // [max, i, arr[i], length]
+        to_loop_start jump        // [max, i, newMax, length]
+
+
+    to_loop_start:
+        pop                       // [i, max, length]
+        0x1                       // [1, i, max, length]
+        add                       // [i+1, max, length]
+        loopStart jump            // [newIndex, max, length]
 
     finish:
-        pop                       // [max] - Убираем длину массива
-        push0 mstore              // Сохраняем max в памяти
-        0x20 push0 return         // Возвращаем 32 байта, начиная с адреса 0
+        pop                       // [max] 
+        push0 mstore              // 
+        0x20 push0 return         // 
 
-    emptyArray:
-        0x00 0x00 revert          // Если массив пустой, вызываем revert
+    _revert:
+        0x00 0x00 revert          
 }
 
 

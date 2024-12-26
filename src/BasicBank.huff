@@ -47,14 +47,13 @@
 }
 
 #define macro WITHDRAW() = takes(0) returns(0) {
-    0x04 calldataload        // [value]
-    BALANCE_OF()             // [balance, value]
-    gt send jumpi
+    caller                            // [caller]
+    LOAD_ELEMENT(BALANCE_SLOT)        // [balance]
+    0x04 calldataload                 // [value, balance]
+    gt                                // [1 | 0, balance]
+    iszero send jumpi
 
-    finish jump
-
-    finish:
-        0x00 0x00 revert
+    0x00 0x00 revert
 
     send:
         0x00                     // [retSize]

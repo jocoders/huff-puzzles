@@ -10,9 +10,78 @@
  *  NOTICE: The contract should revert when an unrecognized function is called
  */
 
- #define function distribute(address[]) payable returns()
+#define function distribute(address[]) payable returns()
+
+#define macro SEND_ETHER() = takes(3) returns(0) {
+                             // [arr[i], index, amount, length]
+    0x00                     // [retSize, [arr[i], index, amount, length]
+    0x00                     // [retOffset, retSize, [arr[i], index, amount, length]
+    0x20                     // [argsize, retOffset, retSize, [arr[i], index, amount, length]
+    0x04                     // [argsOffset, argsize, retOffset, retSize, [arr[i], index, amount, length]
+    dup7                     // [amount, argsOffset, argsize, retOffset, retSize, [arr[i], index, amount, length]
+    dup6                     // [arr[i], amount, argsOffset, argsize, retOffset, retSize, [arr[i], index, amount, length]
+
+    0x6000                   // [gas, arr[i], amount, argsOffset, argsize, retOffset, retSize, [arr[i], index, amount, length]
+    call                     // [success, [arr[i], index, amount, length]
+    iszero finish jumpi      // [arr[i], index, amount, length]
+
+    finish:
+        0x00 0x00 revert
+}
+
+ #define macro DISTRIBUTE() = takes(0) returns(0) {
+    0x44                          // [68] offset
+    calldatasize                  // [calldatasize, 68]
+    sub                           // [length]
+    dup1                          // [length, length]
+    iszero _revert jumpi           // [length]
+
+    dup1                          // [length, length]
+    callvalue                     // [value, length, length]
+    div                           // [amount, length]
+    push0                         // [index = 0, amount, length]
+
+    loopstart:
+        dup3                      // [length, index, amount, length]
+        dup2                      // [index, length, index, amount, length]
+        0x20                      // [32, index, length, index, amount, length]
+        mul                       // [32*index, length, index, amount, length]
+        lt                        // [1 | 0, index, amount, length]
+        iszero _return jumpi      // [index, amount, length]
+
+        dup1                      // [index, index, amount, length]
+        0x20                      // [32, index, index, amount, length]
+        mul                       // [32*index, index, amount, length]
+        0x44                      // [0x44, 32*index, index, amount, length]
+        add                       // [0x44 + 32*index, index, amount, length]
+        calldataload              // [arr[i], index, amount, length]
+        //------------------------//
+        dup4                      // [length, arr[i], index, amount, length]
+        dup2                      // [arr[i], length, arr[i], index, amount, length]
+        swap                      // [length, arr[i], arr[i], index, amount, length]
+        gt                        // [1 | 0, arr[i], index, amount, length]
+        iszero transfer jumpi     // [arr[i], index, amount, length]
+
+        0x00 0x00 revert
+
+    transfer:
+        SEND_ETHER()              // [arr[i], index, amount, length]
+        pop                       // [index, amount, length]
+        loopstart jump            // [index, amount, length]
+
+    _revert:
+        0x00 0x00 revert
+    _return:
+        0x00 0x00 return   
+ }
 
 
  #define macro MAIN() = takes(0) returns(0) {
-   
+    0x00 calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(distribute) eq distribute jumpi 
+    0x00 0x00 revert
+
+    distribute:
+        DISTRIBUTE()
  }

@@ -11,27 +11,43 @@
 
  #define function makeContract() payable returns(address)
 
+ // 0x600a8060093d393df3620caffe3d5260203df3:
+ // 0x60: PUSH1 (push 1 byte to stack)
+ // 0x0a: 10 (push 10 to stack) - size of the data that will be copied into memory using the CODECOPY command
+ // 0x80: DUP1 (duplicate top of stack)
+ // 0x60: PUSH1 (push 1 byte to stack)
+ // 0x09: 9 (push 9 to stack) - specifies the offset in the code where the copying of the code into memory will begin. This means that the copying will begin from the 9th byte of the currently executing code.
+ // 0x3d: CALLDATALOAD (load data from calldata)
+ // 0x39: CODECOPY (copy code to memory)
+ // 0x3d: RETURNDATASIZE (put data size to stack)
+ // 0xf3: RETURN (return data from memory)
+ // 0x62: PUSH3 (push 3 bytes to stack)
+ // 0x0caffe: 0xcaffek (push 0xcaffe to stack)
+ // 0x3d: RETURNDATASIZE (put data size to stack)
+ // 0x52: MSTORE (store 32 bytes to memory)
+ // 0x60: PUSH1 (push 1 byte to stack)
+ // 0x20: 32 (store 32 bytes to memory)
+ // 0x3d: RETURNDATASIZE (put data size to stac)
+ // 0xf3: RETURN (return data from memory)
+
  #define macro MAKE_CONTRACT() = takes(0) returns(0) {
     0x600a8060093d393df3620caffe3d5260203df3 // This is a sequence of bytecode that defines the behavior of the contract to be created.
-                                             // It includes opcodes for pushing data, returning data, and handling function calls.
-                                             // 0x60 is the PUSH1 opcode, which pushes the next byte onto the stack.
-                                             // 0x0a, 0x80, 0x60, 0x09, etc., are the bytes being pushed by various PUSH operations.
-                                             // Stack: [contract bytecode]
+                                             // [contract bytecode]
 
     returndatasize mstore                    // Store the size of the return data (initially 0) at memory location 0.
-                                             // Stack: [empty] (mstore consumes the top two stack items)
+                                             // [empty] (mstore consumes the top two stack items)
 
     0x13 0x0d returndatasize                 // Pushes additional values onto the stack, possibly related to setup or further operations.
                                              // Stack: [0x0d, 0x13, 0]
 
     create                                   // Creates a new contract with the provided bytecode and endowment (0 wei in this case).
-                                             // Stack: [address] - The address of the newly created contract is left on the stack.
+                                             // [address] - The address of the newly created contract is left on the stack.
 
     returndatasize mstore                    // Store the size of the return data (still 0 after contract creation) at memory location 0.
-                                             // Stack: [empty] (mstore consumes the top two stack items)
+                                             // [empty] (mstore consumes the top two stack items)
 
     0x20 returndatasize return               // Return 32 bytes starting from memory location 0, which contains the address of the new contract.
-                                             // Stack: [empty] (return consumes the top two stack items)
+                                             // [empty] (return consumes the top two stack items)
  }
 
 #define macro MAIN() = takes(0) returns(0) {

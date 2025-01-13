@@ -13,45 +13,46 @@
 #define function balanceOf(address) payable returns(uint256)
 #define function withdraw(uint256) payable returns()
 
+// Calculates the storage slot in a key-based contract using a hash function
 #define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns (1) {
-    // Input stack: [key]
-    // Load the data into memory and hash it, while preserving the memory location.
-    <mem_ptr>   // [<mem_ptr>, key]
-    mstore      // []
+                            // [key]
+                            // offset, value
+    <mem_ptr>               // [<mem_ptr>, key]
+    mstore                  // []
 
-    // Hash the data, generating a key.
-    0x20                // [32]
-    <mem_ptr>           // [<mem_ptr>, 32]
-    sha3                // [slot]
+                            // Hash the data, generating a key
+    0x20                    // [32]
+    <mem_ptr>               // [<mem_ptr>, 32]
+    sha3                    // [slot]
 }
 
-/// @notice Store an element from a key
+// Store an element from a key
 #define macro STORE_ELEMENT(mem_ptr) = takes(2) returns(0) {
-    // Input stack: [key, value]
+                                    // [key, value]
     GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot, value]
     sstore                          // []
 }
 
-/// @notice Load an element onto the stack from a key
+// Load an element onto the stack from a key
 #define macro LOAD_ELEMENT(mem_ptr) = takes(1) returns(1) {
-    // Input stack: [key]
+                                    // [key]
     GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot]
     sload                           // [value]
 }
 
 #define macro BALANCE_OF() = takes(0) returns(0) {
-    0x04 calldataload
-    LOAD_ELEMENT(BALANCE_SLOT)
-    0x00 mstore
-    0x20 0x00 return
+    0x04 calldataload                // [value]
+    LOAD_ELEMENT(BALANCE_SLOT)       // [balance]
+    0x00 mstore                      // []
+    0x20 0x00 return                 
 }
 
 #define macro WITHDRAW() = takes(0) returns(0) {
     caller                            // [caller]
     LOAD_ELEMENT(BALANCE_SLOT)        // [balance]
     0x04 calldataload                 // [value, balance]
-    gt                                // [1 | 0, balance]
-    iszero send jumpi
+    gt                                // [1 | 0]
+    iszero send jumpi                 // []
 
     0x00 0x00 revert
 
@@ -70,39 +71,42 @@
 #define macro RECEIVE() = takes(0) returns(0) {
     0x00                                           // [0x00]
     callvalue                                      // [value, 0x00]
-    gt continue jumpi                              // []
+    gt                                             // [1 | 0]
+    continue jumpi                                 // []
     
     continue:
       callvalue                                    // [value]
       caller                                       // [caller, value]
       dup1                                         // [caller, caller, value]
-      LOAD_ELEMENT(BALANCE_SLOT)
-      dup1
-      iszero finish jumpi
+      LOAD_ELEMENT(BALANCE_SLOT)                   // [balance, caller, value]
+      dup1                                         // [balance, balance, caller, value]
+      iszero finish jumpi                          // [balance, caller, value]
 
     receive_finish jump
 
-    receive_finish:
-        dup3
-        add
-        swap1
-        STORE_ELEMENT(BALANCE_SLOT)
-        pop
-        stop
-
-    finish:
-        pop
-        STORE_ELEMENT(BALANCE_SLOT)
+    receive_finish:                                 // [balance, caller, value]
+        dup3                                        // [value, balance, caller, value]
+        add                                         // [value+balance, caller, value]
+        swap1                                       // [caller, value+balance, value]
+        STORE_ELEMENT(BALANCE_SLOT)                 // [value]
+        pop                                         // []
+        stop                                        // []
+  
+    finish:                                         // [balance, caller, value]
+        pop                                         // caller, value]
+        STORE_ELEMENT(BALANCE_SLOT)                 // []
         stop
 }
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]
 
-    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi
-    dup1 __FUNC_SIG(withdraw) eq withdraw jumpi
+    // Check selector
+    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi    // Jump if selector matches
+    dup1 __FUNC_SIG(withdraw) eq withdraw jumpi      // Jump if selector matches
 
-    receive jump
+    receive jump                                     // Jump if selector does not match
 
     balanceOf:
         BALANCE_OF()

@@ -7,19 +7,10 @@
 
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x01                         // [1] - Push the constant value 1 onto the stack
-                                 // Stack: [1]
-    0x00                         // [0, 1] - Push the memory offset 0 onto the stack
-                                 // Stack: [0, 1]
-
+    0x01                         // [0x01] - Push the constant value 1 onto the stack
+    0x00                         // [0x00, 0x01] - Push the memory offset 0 onto the stack
     mstore                       // [] - Store the value 1 at memory offset 0
-                                 // Stack: [empty] (mstore consumes the top two stack items: offset and value)
-
-    0x20                         // [32] - Push the size of the data to return (32 bytes) onto the stack
-                                 // Stack: [32]
-    0x00                         // [0, 32] - Push the start position of the data in memory (offset 0) onto the stack
-                                 // Stack: [0, 32]
-
+    0x20                         // [0x20] - Push the size of the data to return (32 bytes) onto the stack
+    0x00                         // [0x00, 0x20] - Push the start position of the data in memory (offset 0) onto the stack
     return                       // [] - Return 32 bytes starting from memory location 0
-                                 // Stack: [empty] (return consumes the top two stack items: start position and size)
 }

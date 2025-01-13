@@ -30,7 +30,6 @@ contract MaxOfArrayTest is Test, NonMatchingSelectorHelper {
         arr[9] = 27;
 
         uint256 x = maxOfArray.maxOfArray(arr);
-        console.log("x", x);
         assertEq(x, 67251781, "expected max of arr to be 67251781");
 
         uint256[] memory arr2 = new uint256[](0);
@@ -43,8 +42,8 @@ contract MaxOfArrayTest is Test, NonMatchingSelectorHelper {
         arr3[2] = 7;
         arr3[3] = 5;
         arr3[4] = 4;
-        x = maxOfArray.maxOfArray(arr3);
-        assertEq(x, 7, "expected max of arr to be 7");
+        uint256 x1 = maxOfArray.maxOfArray(arr3);
+        assertEq(x1, 7, "expected max of arr to be 7");
     }
 
     /// @notice Test that a non-matching selector reverts

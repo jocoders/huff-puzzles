@@ -10,35 +10,25 @@
 
  #define macro MAIN() = takes(0) returns(0) {
     calldatasize                  // [calldatasize] - Push the size of calldata onto the stack
-                                  // Stack: [calldatasize]
-    dup1                          // [calldatasize, calldatasize] - Duplicate the top stack item
-                                  // Stack: [calldatasize, calldatasize]
-    iszero                        // [iszero, calldatasize] - Push 1 if calldatasize is 0, otherwise push 0
-                                  // Stack: [iszero, calldatasize]
+    dup1                          // [calldatasize, calldatasize] 
+    iszero                        // [1 | 0, calldatasize] 
     zero_calldata jumpi           // Jump to zero_calldata if iszero is true (i.e., if calldatasize is 0)
 
-    calldatasize                  // [calldatasize, calldatasize] - Push calldatasize again onto the stack
-                                  // Stack: [calldatasize, calldatasize]
-    0x00                          // [0x00, calldatasize, calldatasize] - Push 0 onto the stack
-                                  // Stack: [0x00, calldatasize, calldatasize]
-    0x00                          // [0x00, 0x00, calldatasize, calldatasize] - Push another 0 onto the stack
-                                  // Stack: [0x00, 0x00, calldatasize, calldatasize]
-    calldatacopy                  // [] - Copy calldatasize bytes of calldata to memory starting at 0x00
-                                  // Stack: [empty] (calldatacopy consumes three items: destOffset, offset, size)
+    0x00                          // [0x00, calldatasize] 
+    0x00                          // [0x00, 0x00, calldatasize] 
+    calldatacopy                  // [] - Copy calldatasize bytes of calldata to memory starting at 0x00 [destOffset, offset, size]
 
-    calldatasize                  // [calldatasize] - Push calldatasize onto the stack again
-                                  // Stack: [calldatasize]
-    0x00                          // [0x00, calldatasize] - Push 0 onto the stack
-                                  // Stack: [0x00, calldatasize]
+    calldatasize                  // [calldatasize] 
+    0x00                          // [0x00, calldatasize]
     sha3                          // [hash] - Compute the keccak256 hash of data in memory from 0x00 to calldatasize
-                                  // Stack: [hash]
 
-    0x00 mstore                   // [] - Store the hash at memory location 0x00
-                                  // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
-    0x20 0x00 return              // Return 32 bytes starting from memory location 0x00
-                                  // Stack: [empty] (return consumes the top two stack items: size and start position)
+    0x00                          // [0x00, hash]
+    mstore                        // [] - Store the hash at memory location 0x00
+
+    0x20                          // [0x20]
+    0x00                          // [0x00, 0x20]
+    return                        // Return 32 bytes starting from memory location 0x00
 
     zero_calldata:                // Label for handling zero calldata case
     0x00 0x00 return              // Return 0 as there is no calldata to process
-                                  // Stack: [empty] (return consumes the top two stack items: size and start position)   
  }

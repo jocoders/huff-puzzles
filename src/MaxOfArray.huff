@@ -25,16 +25,16 @@
         dup3                      // [length, i, max, length]
         dup2                      // [i, length, i, max, length]
 
-        0x20                      // [32, i, length, i, max, length]
-        mul                       // [i*32, length, i, max, length]
+        0x20                      // [0x20, i, length, i, max, length]
+        mul                       // [i*0x20, length, i, max, length]
         lt                        // [1 | 0, i, max, length]
         iszero finish jumpi       // [i, max, length]  
 
         dup1                      // [i, i, max, length] 
-        0x20                      // [32, i, i, max, length] 
-        mul                       // [i*32, i, max, length]
-        0x44                      // [0x44, i*32, i, max, length] 
-        add                       // [0x44*i*32, i, max, length]
+        0x20                      // [0x20, i, i, max, length] 
+        mul                       // [i*0x20, i, max, length]
+        0x44                      // [0x44, i*0x20, i, max, length] 
+        add                       // [0x44+(i*0x20), i, max, length] 
         calldataload              // [arr[i], i, max, length]
 
         dup1                      // [arr[i], arr[i], i, max, length] 
@@ -55,8 +55,11 @@
 
     finish:
         pop                       // [max] 
-        push0 mstore              // 
-        0x20 push0 return         // 
+        push0                     // [0x00, max]
+        mstore                    // []
+        0x20                      // [0x20]
+        push0                     // [0x00, 0x20]
+        return                    // []
 
     _revert:
         0x00 0x00 revert          
@@ -66,10 +69,10 @@
 
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr           
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]        
 
-    __FUNC_SIG(maxOfArray) eq  
-    maxOfArray jumpi     
+    __FUNC_SIG(maxOfArray) eq maxOfArray jumpi
 
     0x00 0x00 revert
 

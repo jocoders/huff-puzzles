@@ -16,26 +16,31 @@
  #define function bar() payable returns(uint256)
 
  #define macro FOO() = returns(0) {
-    0x02 0x00 mstore  // Store the constant value 2 at memory location 0x00
-                      // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
+    0x02              // [0x02]
+    0x00              // [0x00, 0x02]
+    mstore            // [] Store the constant value 2 at memory location 0x00
 
-    0x20 0x00 return  // Return 32 bytes starting from memory location 0x00
-                      // Stack: [empty] (return consumes the top two stack items: size and start position)
+    0x20              // [0x20]
+    0x00              // [0x00, 0x20]
+    return            // [] Return 32 bytes starting from memory location 0x00
  }
 
  #define macro BAR() = returns(0) {
-    0x03 0x00 mstore  // Store the constant value 3 at memory location 0x00
-                      // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
+    0x03              // [0x03]
+    0x00              // [0x00, 0x03]
+    mstore            // [] Store the constant value 3 at memory location 0x00
 
-    0x20 0x00 return  // Return 32 bytes starting from memory location 0x00
-                      // Stack: [empty] (return consumes the top two stack items: size and start position)
+    0x20              // [0x20]
+    0x00              // [0x00, 0x20]
+    return            // [] Return 32 bytes starting from memory location 0x00
  }
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr
+    0x00 calldataload                              // [calldata]
+    0xe0 shr                                       // [selector]
 
-    dup1 __FUNC_SIG(foo) eq foo jumpi
-    dup1 __FUNC_SIG(bar) eq bar jumpi
+    dup1 __FUNC_SIG(foo) eq foo jumpi              // Jump if selector matches
+    dup1 __FUNC_SIG(bar) eq bar jumpi              // Jump if selector matches
 
     0x00 0x00 revert
 

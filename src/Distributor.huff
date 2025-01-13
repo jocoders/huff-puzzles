@@ -30,7 +30,7 @@
 }
 
  #define macro DISTRIBUTE() = takes(0) returns(0) {
-    0x44                          // [68] offset
+    0x44                          // [68] offset -> [selector 4, offset 32, length 32, data...]
     calldatasize                  // [calldatasize, 68]
     sub                           // [length]
     dup1                          // [length, length]
@@ -40,6 +40,7 @@
     callvalue                     // [value, length, length]
     div                           // [amount, length]
     push0                         // [index = 0, amount, length]
+    loopstart jump
 
     loopstart:
         dup3                      // [length, index, amount, length]
@@ -55,7 +56,6 @@
         0x44                      // [0x44, 32*index, index, amount, length]
         add                       // [0x44 + 32*index, index, amount, length]
         calldataload              // [arr[i], index, amount, length]
-        //------------------------//
         dup4                      // [length, arr[i], index, amount, length]
         dup2                      // [arr[i], length, arr[i], index, amount, length]
         swap                      // [length, arr[i], arr[i], index, amount, length]
@@ -77,9 +77,11 @@
 
 
  #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]
 
-    dup1 __FUNC_SIG(distribute) eq distribute jumpi 
+    dup1 __FUNC_SIG(distribute) eq distribute jumpi  // Jump if selector matches
+
     0x00 0x00 revert
 
     distribute:

@@ -9,28 +9,29 @@
 
 #define function donated(address) payable returns(uint256)
 
+// Calculates the storage slot in a key-based contract using a hash function
 #define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns (1) {
-    // Input stack: [key]
-    // Load the data into memory and hash it, while preserving the memory location.
-    <mem_ptr>   // [<mem_ptr>, key]
-    mstore      // []
+                            // [key]
+                            // offset, value
+    <mem_ptr>               // [<mem_ptr>, key]
+    mstore                  // []
 
-    // Hash the data, generating a key.
-    0x20                // [32]
-    <mem_ptr>           // [<mem_ptr>, 32]
-    sha3                // [slot]
+                            // Hash the data, generating a key
+    0x20                    // [32]
+    <mem_ptr>               // [<mem_ptr>, 32]
+    sha3                    // [slot]
 }
 
-/// @notice Store an element from a key
+// Store an element from a key
 #define macro STORE_ELEMENT(mem_ptr) = takes(2) returns(0) {
-    // Input stack: [key, value]
+                                    // [key, value]
     GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot, value]
     sstore                          // []
 }
 
-/// @notice Load an element onto the stack from a key
+// Load an element onto the stack from a key
 #define macro LOAD_ELEMENT(mem_ptr) = takes(1) returns(1) {
-    // Input stack: [key]
+                                    // [key]
     GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot]
     sload                           // [value]
 }
@@ -64,16 +65,17 @@
 #define macro DONATED() = takes(0) returns(0) {
     caller                                     // [from]
     LOAD_ELEMENT(BALANCE_SLOT)                 // [value]
-    0x00 mstore
+    0x00 mstore                                // []
     0x20 0x00 return
 }
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr                
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]               
 
-    dup1 __FUNC_SIG(donated) eq donated jumpi
+    dup1 __FUNC_SIG(donated) eq donated jumpi       // Jump if selector matches
 
-    set_donation jump
+    set_donation jump                               // Jump if selector does not match   
 
     set_donation:
         SET_DONATION()

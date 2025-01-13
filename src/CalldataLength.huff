@@ -8,12 +8,10 @@
 */
 
 #define macro MAIN() = takes(0) returns(0) {
-    calldatasize        // [calldatasize] - Push the size of calldata onto the stack
-                        // Stack: [calldatasize]
-
-    0x00 mstore         // [] - Store the calldatasize at memory location 0x00
-                        // Stack: [empty] (mstore consumes the top two stack items)
+    calldatasize        // [calldatasize] 
+ 
+    0x00                // [0x00, size]
+    mstore              // [] 
 
     0x20 0x00 return    // return 32 bytes starting from memory location 0x00
-                        // Stack: [empty] (return consumes the top two stack items)
 }

@@ -16,68 +16,48 @@
 #define function getTimeUntil(uint256) payable returns(uint256)
 
 #define macro GET_TIME_ELAPSED() = takes(0) returns(0) {
-    0x04 calldataload            // [_timestamp] - Load the timestamp from calldata
-                                // Stack: [_timestamp]
-    timestamp                    // [timestamp, _timestamp] - Push the current block timestamp onto the stack
-                                // Stack: [timestamp, _timestamp]
-    dup1                         // [timestamp, timestamp, _timestamp] - Duplicate the top stack item
-                                // Stack: [timestamp, timestamp, _timestamp]
-    dup3                         // [_timestamp, timestamp, timestamp, _timestamp] - Duplicate the third stack item from the top
-                                // Stack: [_timestamp, timestamp, timestamp, _timestamp]
-    gt                           // [1 | 0, timestamp, _timestamp] - Greater than comparison, results in 1 if _timestamp is greater than timestamp
-                                // Stack: [1 | 0, timestamp, _timestamp]
-    handle_overflow jumpi        // Jump to handle_overflow if the result of gt was true (1)
+    0x04 calldataload              // [_time]
+    timestamp                      // [timestamp, _time] 
+    dup1                           // [timestamp, timestamp, _time]
+    dup3                           // [_time, timestamp, timestamp, _time]
+    gt                             // [1 | 0, timestamp, _time] 
+    handle_overflow jumpi          // Jump to handle_overflow if the result of gt was true (1)
 
-    sub                          // [timestamp - _timestamp] - Subtract _timestamp from timestamp
-                                // Stack: [result]
-    0x00 mstore                  // [] - Store the result at memory location 0x00
-                                // Stack: [empty]
-    0x20 0x00 return             // Return 32 bytes starting from memory location 0x00
-                                // Stack: [empty]
+    sub                            // [timestamp - _time]
+    0x00                           // [0x00, result]
+    mstore                         // [] - Store the result at memory location 0x00
+    0x20 0x00 return               // Return 32 bytes starting from memory location 0x00
 
     handle_overflow:
-        0x00 0x00 mstore        // [] - Store 0 at memory location 0x00 in case of overflow (future timestamp)
-                                // Stack: [empty]
-        0x20 0x00 return        // Return 32 bytes starting from memory location 0x00
-                                // Stack: [empty]
+        0x00 0x00 mstore           // [] - Store 0 at memory location 0x00 in case of overflow (future timestamp)
+        0x20 0x00 return           // Return 32 bytes starting from memory location 0x00
 }
 
 #define macro GET_TIME_UNTIL() = takes(0) returns(0) {
-    0x04 calldataload            // [_timestamp] - Load the timestamp from calldata
-                                // Stack: [_timestamp]
-    timestamp                    // [timestamp, _timestamp] - Push the current block timestamp onto the stack
-                                // Stack: [timestamp, _timestamp]
-    swap1                        // [_timestamp, timestamp] - Swap the top two items on the stack
-                                // Stack: [_timestamp, timestamp]
-    dup1                         // [_timestamp, _timestamp, timestamp] - Duplicate the top stack item
-                                // Stack: [_timestamp, _timestamp, timestamp]
-    dup3                         // [timestamp, _timestamp, _timestamp, timestamp] - Duplicate the third stack item from the top
-                                // Stack: [timestamp, _timestamp, _timestamp, timestamp]
-    gt                           // [1 | 0, _timestamp, timestamp] - Greater than comparison, results in 1 if timestamp is greater than _timestamp
-                                // Stack: [1 | 0, _timestamp, timestamp]
-    handle_overflow jumpi        // Jump to handle_overflow if the result of gt was true (1)
+    0x04 calldataload              // [_time] 
+    timestamp                      // [timestamp, _time]
+    swap1                          // [_time, timestamp] 
+    dup1                           // [_time, _time, timestamp]
+    dup3                           // [timestamp, _time, _time, timestamp]
+    gt                             // [1 | 0, _time, timestamp]
+    handle_overflow jumpi          // Jump to handle_overflow if the result of gt was true (1)
 
-    sub                          // [_timestamp - timestamp] - Subtract timestamp from _timestamp
-                                // Stack: [result]
-    0x00 mstore                  // [] - Store the result at memory location 0x00
-                                // Stack: [empty]
-    0x20 0x00 return             // Return 32 bytes starting from memory location 0x00
-                                // Stack: [empty]
+    sub                            // [_time - timestamp]
+    0x00 mstore                    // [] - Store the result at memory location 0x00
+    0x20 0x00 return               // Return 32 bytes starting from memory location 0x00
 
     handle_overflow:
-        0x00 0x00 mstore        // [] - Store 0 at memory location 0x00 in case of overflow (past timestamp)
-                                // Stack: [empty]
-        0x20 0x00 return        // Return 32 bytes starting from memory location 0x00
-                                // Stack: [empty]
+        0x00 0x00 mstore           // [] - Store 0 at memory location 0x00 in case of overflow (past timestamp)
+        0x20 0x00 return           // Return 32 bytes starting from memory location 0x00
 }
 
 
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]
 
     dup1 __FUNC_SIG(getTimeElapsed) eq getTimeElapsed jumpi
-
     dup1 __FUNC_SIG(getTimeUntil) eq getTimeUntil jumpi
 
     0x00 0x00 revert

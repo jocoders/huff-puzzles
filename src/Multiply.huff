@@ -12,42 +12,39 @@
 #define function multiply(uint256, uint256) payable returns(uint256)
 
 #define macro MULTIPLY() = takes(0) returns(0) {
-    0x04 calldataload         // [arg_1] - Load the first argument from calldata at offset 0x04
-                              // Stack: [arg_1]
-    dup1 iszero zero jumpi    // if arg_1 == 0, return 0
-                              // Stack: [arg_1] (dup1 duplicates arg_1, iszero checks if it's zero, jump if true)
+    0x04                      // 0x04
+    calldataload              // [arg_1] - Load the first argument from calldata at offset 0x04
+    dup1                      // [arg_1, arg_1]
+    iszero ret jumpi          // [arg_1]
 
-    0x24 calldataload swap1   // [arg_2, arg_1] - Load the second argument from calldata at offset 0x24 and swap positions with arg_1
-                              // Stack: [arg_2, arg_1]
-    dup2 dup2 mul             // [mul_result, arg_2, arg_1] - Duplicate arg_2 and arg_1, then multiply them
-                              // Stack: [mul_result, arg_2, arg_1]
-    dup1 0x00 mstore          // Store mul_result in memory at offset 0
-                              // Stack: [mul_result, arg_2, arg_1] (dup1 duplicates mul_result)
+    0x24                      // [0x24, arg_1]
+    calldataload              // [arg_2, arg_1]
+    swap1                     // [arg_1, arg_2] 
+    dup2                      // [arg_2, arg_1, arg_2]
+    dup2                      // [arg_1, arg_2, arg_1, arg_2]
+    mul                       // [mul_res, arg_1, arg_2]
+    dup1                      // [mul_res, mul_res, arg_1, arg_2]
+    0x00                      // [0x00, mul_res, mul_res, arg_1, arg_2]
+    mstore                    // [mul_res, arg_1, arg_2]
+    div                       // [div_res, arg_1]
+    eq ret jumpi              // [1 | 0, arg_1]
 
-    div eq ret jumpi          // if mul_result / arg_2 == arg_1, return mul_result
-                              // Stack: [arg_1] (div divides mul_result by arg_2, eq checks if the result equals arg_1, jump if true)
-
-    0x00 0x00 revert          // Revert the transaction if overflow is detected
-                              // Stack: [empty]
-
-    zero:
-        0x00 0x00 mstore      // Store 0 in memory at offset 0x00
-                              // Stack: [empty]
-        0x20 0x00 return      // Return 32 bytes starting from memory location 0x00
-                              // Stack: [empty]
+    0x00                      // [0x00, arg_1]
+    0x00                      // [0x00, 0x00, arg_1]
+    revert                    // Revert the transaction if overflow is detected
 
     ret:
-        0x20 0x00 return      // Return 32 bytes starting from memory location 0x00
-                              // Stack: [empty]
+        0x20                  // [0x20, arg_1]
+        0x00                  // [0x00, 0x20, arg_1]
+        return                // Return 32 bytes starting from memory location 0x00
 }
 
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload
-    0xe0 shr
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]
 
-    __FUNC_SIG(multiply) eq
-    multiply jumpi
+    __FUNC_SIG(multiply) eq multiply jumpi
 
     0x00 0x00 revert
 

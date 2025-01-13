@@ -10,25 +10,22 @@
 
 #define macro GET_TIME_AND_BLOCK() = takes(0) returns(0) {
     timestamp                     // [timestamp] - Push the current block timestamp onto the stack
-                                  // Stack: [timestamp]
-    number                        // [number, timestamp] - Push the current block number onto the stack
-                                  // Stack: [number, timestamp]
+    number                        // [blockNumber, timestamp] - Push the current block number onto the stack
+    0x20                          // [0x20, blockNumber, timestamp]
+    mstore                        // [timestamp] - Store the blockNumber at memory offset 0x20
+    0x00                          // [0x00, timestamp]
+    mstore                        // [] - Store the timestamp at memory offset 0x00
 
-    0x20 mstore                   // [] - Store the timestamp at memory offset 0x20
-                                  // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
-    0x00 mstore                   // [] - Store the block number at memory offset 0x00
-                                  // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
-
-    0x40 0x00 return              // Return 64 bytes starting from memory location 0x00
-                                  // Stack: [empty] (return consumes the top two stack items: size and start position)
+    0x40                          // [0x40]
+    0x00                          // [0x00, 0x40]
+    return                        // Return 64 bytes starting from memory location 0x00
 }
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload    
-    0xe0 shr            
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]          
 
-    __FUNC_SIG(getTimeAndBlock) eq  
-    getTimeAndBlock jumpi     
+    __FUNC_SIG(getTimeAndBlock) eq  getTimeAndBlock jumpi     
 
     0x00 0x00 revert
 

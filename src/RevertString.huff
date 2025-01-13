@@ -11,21 +11,31 @@
  *  The task is to write within the `MAIN` macro below, huff code that reverts (all the time) with the string error message `Only Huff`
 */
 
+// 0x4f6e6c792048756666:
+// 0x4f - 'O'
+// 0x6e - 'n'
+// 0x6c - 'l'
+// 0x79 - 'y'
+// 0x20 - ' ' (пробел)
+// 0x48 - 'H'
+// 0x75 - 'u'
+// 0x66 - 'f'
+// 0x66 - 'f'
 
 #define macro MAIN() = takes(0) returns(0) {
-     0x20 returndatasize mstore  // [0x20] - Push the memory offset 0x20 onto the stack
-                                // Stack: [0x20]
-                                // mstore stores the returndatasize (initially 0) at memory offset 0x20
+     0x20                       // [0x20]
+     0x00                       // [0x00, 0x20]
+     mstore                     // [] - Push the memory offset 0x20 onto the stack
 
-    0x09 0x20 mstore            // [0x09, 0x20] - Push the length of the string (9 bytes) and the memory offset 0x20 onto the stack
-                                // Stack: [0x09, 0x20]
-                                // mstore stores the length of the string at memory offset 0x20
+     0x09                       // [0x09]
+     0x20                       // [0x20,0x09]
+     mstore                     // [] - Push the length of the string onto the stack
 
-    __RIGHTPAD(0x4f6e6c792048756666) 0x40 mstore // [0x4f6e6c792048756666, 0x40] - Push the UTF-8 hex string and the memory offset 0x40 onto the stack
-                                                  // Stack: [0x4f6e6c792048756666, 0x40]
-                                                  // mstore stores the UTF-8 hex string at memory offset 0x40
+    __RIGHTPAD(0x4f6e6c792048756666) // [0x4f6e6c792048756666] - Push the UTF-8 hex string and the memory offset 0x40 onto the stack
+    0x40                             // [0x40, 0x4f6e6c792048756666]
+    mstore                           // [] - mstore stores the UTF-8 hex string at memory offset 0x40
 
-    0x60 returndatasize revert  // [0x60, returndatasize] - Push the memory offset 0x60 and the returndatasize onto the stack
-                                // Stack: [0x60, returndatasize]
-                                // revert reverts the transaction, returning the data starting from memory offset 0x60
+    0x60                             // [0x60]
+    returndatasize                   // [size, 0x60]
+    revert                           // Revert the transaction
 }

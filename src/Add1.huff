@@ -33,7 +33,7 @@
     __FUNC_SIG(add1) eq  // [is_add1]
     add1 jumpi           // Jump if selector matches
 
-    0x00 0x00 revert     // если селектор не совпал
+    0x00 0x00 revert     // revert if selector does not match
 
     add1:
        ADD1()

@@ -8,15 +8,10 @@
 */
 
 #define macro MAIN() = takes(0) returns(0) {
-    // Retrieve the amount of ether (in wei) sent with the call and push it onto the stack
-    callvalue   // [msg.value] - Push the amount of ether (in wei) sent with the call onto the stack
-                // Stack: [msg.value]
+    callvalue          // [msg.value] 
 
-    // Store the value in memory and prepare to return it
-    0x00 mstore // [] - Store the msg.value at memory location 0x00
-                // Stack: [empty] (mstore consumes the top two stack items: value and memory address)
+    0x00               // [0x00, value]
+    mstore             // [] - Store the msg.value at memory location 0x00
 
-    // Return the value stored in memory
-    0x20 0x00 return // Return 32 bytes starting from memory location 0x00
-                      // Stack: [empty] (return consumes the top two stack items: size and start position)
+    0x20 0x00 return   // Return 32 bytes starting from memory location 0x00
 }

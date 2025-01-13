@@ -14,13 +14,11 @@
 #define error OnlyHuff()
 
 #define macro MAIN() = takes(0) returns(0) {
-    __ERROR(OnlyHuff)           // Define the custom error `OnlyHuff`
-                                // Stack: [empty] (No stack change, just defines the error)
-    0x00 mstore                 // [0] - Push the memory offset 0 onto the stack
-                                // Stack: [0]
-                                // (mstore would normally store a value at this offset, but here it's preparing for revert data)
+    __ERROR(OnlyHuff)            // [OnluHuff] 
+    0x00                         // [0x00]
+    mstore                       // [] - Push the memory offset 0 onto the stack
 
-    0x04 0x00 revert            // Revert the transaction
-                                // Stack: [empty] (revert does not return, ends execution)
-                                // The parameters 0x04 and 0x00 specify the start and size of the memory from which to return data, effectively returning no data here.
+    0x04                         // [0x04]
+    0x00                         // [0x00, 0x04]
+    revert                       // Revert the transaction
 }

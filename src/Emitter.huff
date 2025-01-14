@@ -32,10 +32,10 @@
 
 
  #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload                                // [calldata]
-    0xe0 shr                                         // [selector]       
+    0x00 calldataload                   // [calldata]
+    0xe0 shr                            // [selector]       
 
-    __FUNC_SIG(value) eq                             // Jump if selector matches
+    __FUNC_SIG(value) eq                // Jump if selector matches
     value jumpi     
 
     0x00 0x00 revert

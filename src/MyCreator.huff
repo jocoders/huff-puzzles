@@ -15,7 +15,7 @@
 #define constant DEPLOYER = FREE_STORAGE_POINTER()
 
 #define macro CONSTRUCTOR() = takes(0) returns(0) {
-    caller                      // 
+    caller                      // [caller]
     [DEPLOYER]                  // [DEPLOYER, caller] - Push the storage key for the deployer's address onto the stack
     sstore                      // [] - Store the caller's address at the storage key DEPLOYER
 }

@@ -25,7 +25,8 @@
  #define error ZeroArray()
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]
     
     dup1 __FUNC_SIG(pushh) eq pushh jumpi
     dup1 __FUNC_SIG(popp) eq popp jumpi
@@ -54,66 +55,124 @@
 }
 
 #define macro READ() = takes(0) returns(0) {
-    0x00 sload // [length] We always store length at slot zero.
-    0x04 calldataload // [index, length]
+    0x00                               // [0x00]
+    sload                              // [length] Length stored at slot zero
+    0x04                               // [0x04, length]
+    calldataload                       // [index, length]
 
-    dup1 swap2 gt continue jumpi // [index] if length > index, continue
+    dup1                               // [index, index, length]
+    swap2                              // [length, index, index]
+    gt                                 // [1 | 0, index]
+    continue jumpi                     // [index] if length > index, continue
 
     // Revert if index out of bounds.
-    __ERROR(OutOfBounds) 0x00 mstore
-    0x20 0x00 revert
+    __ERROR(OutOfBounds)               // [OutOfBounds]
+    0x00                               // [0x00]
+    mstore                             // [] - Push the memory offset 0 onto the stack     
+    0x20                               // [0x20]
+    0x00                               // [0x00, 0x20]
+    revert                             // Revert the transaction
 
     continue:
-        0x20 mul // [index * 32] i.e. factor
-        0x20 add // [32 + index * 32] offset + factor; is always 0x20
-        sload // [array[index]]
+        0x20                           // [0x20, index]
+        mul                            // [0x20*index]
+        0x20                           // [0x20, new_index]
+        add                            // [0x20+new_index] 
+        sload                          // [array[index]]
 
-        0x00 mstore
-        0x20 0x00 return
+        0x00                           // [0x00, array[index]]
+        mstore                         // [] - Push item to memory offset 0 onto the stack     
+        0x20                           // [0x20]
+        0x00                           // [0x00, 0x20]
+        return                         // Return 32 bytes
 }
 
 #define macro WRITE() = takes(0) returns(0) {
-    0x00 sload // [length] We always store length at slot zero.
-    0x04 calldataload // [index, length]
+    0x00                               // [0x00]
+    sload                              // [length] Length stored at slot zero
+    0x04                               // [0x04, length] 
+    calldataload                       // [index, length]
 
-    dup1 swap2 gt continue jumpi // [index] if length > index, continue
+    dup1                               // [index, index, length]
+    swap2                              // [length, index, index]
+    gt                                 // [1 | 0, index]
+    continue jumpi                     // [index] if length > index, continue
 
-    // Revert if index out of bounds.
-    __ERROR(OutOfBounds) 0x00 mstore
-    0x20 0x00 revert
+    // Revert if index out of bounds
+    __ERROR(OutOfBounds)               // [OutOfBounds]
+    0x00                               // [0x00]
+    mstore                             // [] - Push the memory offset 0 onto the stack     
+    0x20                               // [0x20]
+    0x00                               // [0x00, 0x20]
+    revert                             // Revert the transaction
 
     continue:
-        0x20 mul // [index * 32] i.e. factor
-        0x20 add // [32 + index * 32] = [offset + factor] = [slot]; is always 0x20
-        0x24 calldataload swap1 // [slot, num]
-        sstore // []
+        0x20                           // [0x20, index]
+        mul                            // [0x20*index] 
+        0x20                           // [0x20, 0x20*index]
+        add                            // [slot]
+        0x24                           // [0x24, slot]
+        calldataload                   // [item, slot]
+        swap1                          // [slot, num]
+        sstore                         // [] - Store new num at slot for slot number
 
-        0x00 0x00 return
+        0x00                           // [0x00]
+        0x00                           // [0x00, 0x00]
+        return                         // Return the transaction
 }
 
 #define macro PUSHH() = takes(0) returns(0) {
-    0x00 sload // [length] We always store length at slot zero.
-    dup1 0x1 add // [new_length, new_index]
-    0x00 sstore // [new_index] Store new length
-    0x20 mul 0x20 add // [slot]
+    0x00                              // [0x00]
+    sload                             // [length] Length stored at slot zero
+    dup1                              // [length, length]
+    0x01                              // [0x01, length, length]
+    add                               // [new_length, length]
+    0x00                              // [0x00, new_length, length]
+    sstore                            // [length] Store new length
+    0x20                              // [0x20, length]
+    mul                               // [0x20*length]
+    0x20                              // [0x20, 0x20*length]
+    add                               // [slot]
 
-    0x04 calldataload swap1 // [slot, num]
-    sstore // [] Store new num at slot for new_index
+    0x04                              // [0x04, slot]
+    calldataload                      // [item, slot]                     
+    swap1                             // [slot, item]
+    sstore                            // [] Store new num at slot for slot number
 
-    0x00 0x00 return
+    0x00                              // [0x00]
+    0x00                              // [0x00, 0x00]
+    return                            // Return the transaction
 }
 
 #define macro POPP() = takes(0) returns(0) {
-    0x00 sload // [length] We always store length at slot zero.
+    0x00                              // [0x00]
+    sload                             // [length] Length stored at slot zero
 
-    dup1 iszero _revert jumpi // [length] revert if array is empty
+    dup1                              // [length, length]
+    iszero _revert jumpi              // [length] revert if array is empty
 
-    0x01 swap1 sub // [new_length, index_to_pop]
-    0x00 sstore // [index_to_pop] store new length
+    dup1                              // [length, length]
+    0x01                              // [0x01, length, lenght]
+    swap1                             // [length, 0x01, length]
+    sub                               // [new_length, length]
+    0x00                              // [0x00, new_length, length]
+    sstore                            // [length] Saved new length
+    0x20                              // [0x20, length]
+    mul                               // [item_offset]
+    0x00                              // [0x00, item_offset]
+    swap1                             // [item_offset, 0x00]
+    sstore                            // [] - Remove item from memory
 
-    0x00 0x00 return
+    0x00                              // [0x00]
+    0x00                              // [0x00, 0x00]
+    return                            // Return the transaction
 
     _revert:
-        __ERROR(ZeroArray) 0x00 mstore
-        0x20 0x00 revert
+        __ERROR(ZeroArray)            // [ZeroArray]
+        0x00                          // [0x00]
+        mstore                        // [] - Push the memory offset 0 onto the stack     
+
+        0x04                          // [0x04]
+        0x00                          // [0x00, 0x04]
+        revert                        // Revert the transaction
 }

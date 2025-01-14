@@ -51,7 +51,8 @@
  }
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr           
+    0x00 calldataload                         // [calldata]
+    0xe0 shr                                  // [selector]         
 
     __FUNC_SIG(makeContract) eq  
     makeContract jumpi     

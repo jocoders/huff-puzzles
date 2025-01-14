@@ -43,13 +43,17 @@
     
     finish:
         pop                       // [new_sum] - Pop the length off the stack, leaving only the sum
-        push0 mstore              // [] - Store new_sum at memory offset 0
-        0x20 push0 return         // Return 32 bytes starting from memory location 0
+        0x00                      // [0x00, new_sum]
+        mstore                    // [] - Store new_sum at memory offset 0
+        0x20                      // [0x20]
+        0x00                      // [0x00, 0x20]
+        return                    // Return 32 bytes starting from memory location 0
 }
 
 
 #define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xe0 shr           
+    0x00 calldataload                                // [calldata]
+    0xe0 shr                                         // [selector]         
 
     __FUNC_SIG(sumArray) eq  
     sumArray jumpi     
